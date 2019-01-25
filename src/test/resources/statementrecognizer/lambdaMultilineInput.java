@@ -10,6 +10,6 @@ public class RBTree<V extends Comparable> {
     public Iterable<RBNode<V>> iterateNodesDFS(DFSNodeIterator.TraversalOrder traversalOrder) {
         return () -> {
             return new DFSNodeIterator<>(head, traversalOrder);
-        }):
+        };
     }
 }

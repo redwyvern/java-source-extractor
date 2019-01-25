@@ -3,9 +3,11 @@ package com.redwyvern.javasource.extractor;
 import com.redwyvern.javasource.ClassFileCode;
 import com.redwyvern.util.JavaSourceUtil;
 import com.redwyvern.util.ResourceUtil;
+import org.junit.Ignore;
 import org.junit.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.fail;
 
 import java.io.InputStream;
 
@@ -17,6 +19,9 @@ public class JavaStatementRecognizerTest {
     private static final String MULTILINE_MULTIMETHOD_CLASS = "statementrecognizer/multiLineMultiMethod";
     private static final String LAMBDA_INLINE_CLASS = "statementrecognizer/lambdaInline";
     private static final String LAMBDA_MULTILINE_CLASS = "statementrecognizer/lambdaMultiline";
+    private static final String NESTED_IF_CLASS = "statementrecognizer/nestedIf";
+
+    private static final String COMPLEX_CLASS_DEMO = "demo/complexClass";
 
     private static InputStream getInput(String testClassName) {
         return ResourceUtil.getInputStream(testClassName + "Input.java");
@@ -34,6 +39,13 @@ public class JavaStatementRecognizerTest {
 
         assertThat(actualText, equalTo(expectedText));
     }
+
+    private void showResult(String testClassName) {
+        ClassFileCode classFileCode = JavaSourceExtractor.extractSource(getInput(testClassName));
+        String classCodeWithStatements = JavaSourceUtil.printCode(classFileCode);
+        System.out.println(classCodeWithStatements);
+    }
+
 
     @Test
     public void instantiationShouldNotThrow() {
@@ -68,6 +80,18 @@ public class JavaStatementRecognizerTest {
     @Test
     public void shouldParseLambdaMultilineClassJavaFile() {
         assertParseFile(LAMBDA_MULTILINE_CLASS);
+    }
+
+    @Test
+    public void shouldParseNestedIfClassJavaFile() {
+        assertParseFile(NESTED_IF_CLASS);
+    }
+
+    // This is really just more of a demo to see how it works on a real class file
+    @Test
+    @Ignore
+    public void statementRecognizerDemo() {
+        showResult(COMPLEX_CLASS_DEMO);
     }
 
 }

@@ -8,7 +8,6 @@ import lombok.ToString;
 @Getter
 @Setter
 @RequiredArgsConstructor
-@ToString
 public class CodeLine implements Comparable {
     private final ClassMethodCode classMethodCode;
     private final String code;

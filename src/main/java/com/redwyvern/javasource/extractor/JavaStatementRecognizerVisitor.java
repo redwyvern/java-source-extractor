@@ -37,6 +37,7 @@ public class JavaStatementRecognizerVisitor extends Java9ParserBaseVisitor<Strin
 
         @Override
         public String visitBlock(Java9Parser.BlockContext ctx) {
+            tokenIndex = ctx.start.getTokenIndex();
             isBlockStart = true;
             return null;
         }
@@ -65,7 +66,20 @@ public class JavaStatementRecognizerVisitor extends Java9ParserBaseVisitor<Strin
         }
         if(firstCodeLine.getStatement() != null) {
             //TODO: Fix this
-            throw new RuntimeException("More than one statement found at code line: " + firstCodeLine.getCode());
+
+            StringBuilder currentStatement = new StringBuilder();
+            for(int i = startToken.getTokenIndex(); i < stopTokenIndex; ++i) {
+                Token currentToken = commonTokenStream.get(i);
+                currentStatement.append(currentToken.getText());
+            }
+            //throw new RuntimeException("More than one statement found at code line: " + firstCodeLine.getCode());
+
+            throw new RuntimeException("More than one statement found at code line " + firstCodeLine.getLineNumber() + "'\n"
+                    + "Previous full statement: '" + firstCodeLine.getStatement().getStatementCode() + "'\n"
+                    + "Previous individual code line: '" + firstCodeLine.getCode() + "'\n"
+                    + "Current code being parsed: '" + currentStatement + "'"
+            );
+
 /*
             throw new ParseException("More than one statement found at code line: " + codeLine.getCode() + "Previous statement: '"
                     + codeLine.getCode().substring(
@@ -113,6 +127,7 @@ public class JavaStatementRecognizerVisitor extends Java9ParserBaseVisitor<Strin
 
     }
 
+
     @Override
     public String visitStatement(Java9Parser.StatementContext ctx) {
 
@@ -121,11 +136,40 @@ public class JavaStatementRecognizerVisitor extends Java9ParserBaseVisitor<Strin
             ctx.getChild(0).accept(nestedStatementVisitor);
         }
 
-        if(nestedStatementVisitor.isBlockStart) {
+        final int tokenDistance = nestedStatementVisitor.getTokenIndex() - ctx.start.getTokenIndex();
+
+        // If token distance is zero than this indicates that the statement 'is a' block. If it is non-zero
+        // then this indicates that the statement 'has a' block.
+        if(nestedStatementVisitor.isBlockStart && tokenDistance == 0) {
             return super.visitStatement(ctx);
         }
 
-        int stopTokenIndex = Math.min(ctx.stop.getTokenIndex(), nestedStatementVisitor.getTokenIndex());
+        int stopTokenIndex = ctx.stop.getTokenIndex();
+
+        /* TODO: This could later be enhanced so that there is the notion of having a line belong to more than one statement
+            The tricky part would be ensuring that the correct statement is selected when performing the line lookup from
+            the stack trace.
+         */
+        // If the nested statement visitor hit something
+        if(nestedStatementVisitor.getTokenIndex() != Integer.MAX_VALUE) {
+            int nestedStatementStartTokenIndex = nestedStatementVisitor.getTokenIndex();
+            Token nestedStatementStartToken = commonTokenStream.get(nestedStatementStartTokenIndex);
+
+            int startLine = ctx.start.getLine();
+
+            if(nestedStatementStartToken.getLine() != ctx.stop.getLine()) {
+
+                Token currentToken = nestedStatementStartToken;
+                stopTokenIndex = nestedStatementStartTokenIndex;
+
+                // Backtrack all the way to the first line of the original statement
+                //noinspection StatementWithEmptyBody
+                while(stopTokenIndex > 0 && currentToken.getLine() > startLine) {
+                    --stopTokenIndex;
+                    currentToken = commonTokenStream.get(stopTokenIndex);
+                }
+            }
+        }
 
         parseStatement(ctx, stopTokenIndex);
         return super.visitStatement(ctx);
