@@ -36,6 +36,14 @@ public class JavaStatementRecognizerVisitor extends Java9ParserBaseVisitor<Strin
         }
 
         @Override
+        public String visitLocalVariableDeclarationStatement(Java9Parser.LocalVariableDeclarationStatementContext ctx) {
+
+            isStatement = true;
+            tokenIndex = ctx.start.getTokenIndex();
+            return null;
+        }
+
+        @Override
         public String visitBlock(Java9Parser.BlockContext ctx) {
             tokenIndex = ctx.start.getTokenIndex();
             isBlockStart = true;
@@ -125,6 +133,53 @@ public class JavaStatementRecognizerVisitor extends Java9ParserBaseVisitor<Strin
             codeLine.setStatement(statement);
         }
 
+    }
+
+    @Override
+    public String visitLocalVariableDeclarationStatement(Java9Parser.LocalVariableDeclarationStatementContext ctx) {
+
+        NestedStatementVisitor nestedStatementVisitor = new NestedStatementVisitor();
+        if(ctx.getChildCount() > 0) {
+            ctx.getChild(0).accept(nestedStatementVisitor);
+        }
+
+        final int tokenDistance = nestedStatementVisitor.getTokenIndex() - ctx.start.getTokenIndex();
+
+        // If token distance is zero than this indicates that the statement 'is a' block. If it is non-zero
+        // then this indicates that the statement 'has a' block.
+        if(nestedStatementVisitor.isBlockStart && tokenDistance == 0) {
+            return super.visitLocalVariableDeclarationStatement(ctx);
+        }
+
+        int stopTokenIndex = ctx.stop.getTokenIndex();
+
+        /* TODO: This could later be enhanced so that there is the notion of having a line belong to more than one statement
+            The tricky part would be ensuring that the correct statement is selected when performing the line lookup from
+            the stack trace.
+         */
+        // If the nested statement visitor hit something
+        if(nestedStatementVisitor.getTokenIndex() != Integer.MAX_VALUE) {
+            int nestedStatementStartTokenIndex = nestedStatementVisitor.getTokenIndex();
+            Token nestedStatementStartToken = commonTokenStream.get(nestedStatementStartTokenIndex);
+
+            int startLine = ctx.start.getLine();
+
+            if(nestedStatementStartToken.getLine() != ctx.stop.getLine()) {
+
+                Token currentToken = nestedStatementStartToken;
+                stopTokenIndex = nestedStatementStartTokenIndex;
+
+                // Backtrack all the way to the first line of the original statement
+                //noinspection StatementWithEmptyBody
+                while(stopTokenIndex > 0 && currentToken.getLine() > startLine) {
+                    --stopTokenIndex;
+                    currentToken = commonTokenStream.get(stopTokenIndex);
+                }
+            }
+        }
+
+        parseStatement(ctx, stopTokenIndex);
+        return super.visitLocalVariableDeclarationStatement(ctx);
     }
 
 

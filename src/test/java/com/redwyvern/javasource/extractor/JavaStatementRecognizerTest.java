@@ -13,12 +13,14 @@ import java.io.InputStream;
 
 public class JavaStatementRecognizerTest {
 
+    private static final String SIMPLE_ASSIGNMENT_CLASS = "statementrecognizer/simpleAssignment";
     private static final String BASIC_CLASS = "statementrecognizer/basic";
     private static final String NESTED_CLASS = "statementrecognizer/nested";
     private static final String SWITCH_STATEMENT_CLASS = "statementrecognizer/switchStatement";
     private static final String MULTILINE_MULTIMETHOD_CLASS = "statementrecognizer/multiLineMultiMethod";
     private static final String LAMBDA_INLINE_CLASS = "statementrecognizer/lambdaInline";
     private static final String LAMBDA_MULTILINE_CLASS = "statementrecognizer/lambdaMultiline";
+    private static final String LAMBDA_MULTILINE_ASSIGNMENT_CLASS = "statementrecognizer/lambdaMultilineAssignment";
     private static final String NESTED_IF_CLASS = "statementrecognizer/nestedIf";
 
     private static final String COMPLEX_CLASS_DEMO = "demo/complexClass";
@@ -58,6 +60,11 @@ public class JavaStatementRecognizerTest {
     }
 
     @Test
+    public void shouldParseSimpleAssignmentClassJavaFile() {
+        assertParseFile(SIMPLE_ASSIGNMENT_CLASS);
+    }
+
+    @Test
     public void shouldParseNestedClassJavaFile() {
         assertParseFile(NESTED_CLASS);
     }
@@ -80,6 +87,11 @@ public class JavaStatementRecognizerTest {
     @Test
     public void shouldParseLambdaMultilineClassJavaFile() {
         assertParseFile(LAMBDA_MULTILINE_CLASS);
+    }
+
+    @Test
+    public void shouldParseLambdaMultilineAssignmentClassJavaFile() {
+        assertParseFile(LAMBDA_MULTILINE_ASSIGNMENT_CLASS);
     }
 
     @Test

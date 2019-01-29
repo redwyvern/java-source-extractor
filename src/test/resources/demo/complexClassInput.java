@@ -14,6 +14,14 @@ public class RBTree<V extends Comparable> {
     }
 
     public Iterable<RBNode<V>> iterateNodesDFS(DFSNodeIterator.TraversalOrder traversalOrder) {
+
+
+        Iterable<RBNode<V>> sillyIterator = () -> {
+            return new DFSNodeIterator<>(head, traversalOrder);
+        };
+
+        Iterable<RBNode<V>> otherIterator = () -> new DFSNodeIterator<>(head, traversalOrder);
+
         return () -> new DFSNodeIterator<>(head, traversalOrder);
     }
 
